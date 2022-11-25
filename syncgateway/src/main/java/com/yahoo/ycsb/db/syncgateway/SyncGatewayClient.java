@@ -1772,6 +1772,12 @@ public class SyncGatewayClient extends DB {
     ArrayNode channelsNode = factory.arrayNode();
     root.put("_id", key);
     channelsNode.add(channel);
+    if (channelsPerDocument != 1){
+      String[] channelsSet = getSetOfRandomChannels();
+      for (int i = 0; i < channelsPerUser; i++) {
+        channelsNode.add(channelsSet[i]);
+      }
+    }
     root.set("channels", channelsNode);
     values.forEach((k, v) -> {
         root.put(k, v.toString());
