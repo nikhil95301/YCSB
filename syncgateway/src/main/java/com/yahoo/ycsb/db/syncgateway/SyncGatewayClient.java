@@ -1801,7 +1801,7 @@ public class SyncGatewayClient extends DB {
     channelsNode.add(channel);
     if (channelsPerDocument != 1){
       String[] channelsSet = getSetOfRandomChannels();
-      for (int i = 0; i < channelsPerUser; i++) {
+      for (int i = 0; i < channelsPerDocument; i++) {
         channelsNode.add(channelsSet[i]);
       }
     }
