@@ -1751,7 +1751,7 @@ public class SyncGatewayClient extends DB {
       channels.add(channelName);
       saveChannelForUser(userName, channelName);
     } else {
-      String[] channelsSet = getSetOfRandomChannels();
+      String[] channelsSet = getSetOfRandomChannels(channelsPerUser);
       for (int i = 0; i < channelsPerUser; i++) {
         channels.add(channelsSet[i]);
       }
@@ -1800,7 +1800,7 @@ public class SyncGatewayClient extends DB {
     root.put("_id", key);
     channelsNode.add(channel);
     if (channelsPerDocument != 1){
-      String[] channelsSet = getSetOfRandomChannels();
+      String[] channelsSet = getSetOfRandomChannels(channelsPerDocument);
       for (int i = 1; i < channelsPerDocument; i++) {
         channelsNode.add(channelsSet[i]);
       }
@@ -1823,14 +1823,14 @@ public class SyncGatewayClient extends DB {
     return DEFAULT_CHANNEL_PREFIX + channelId;
   }
 
-  private String[] getSetOfRandomChannels() {
+  private String[] getSetOfRandomChannels(int noChannels) {
     String[] channels = new String[channelsPerUser];
     int[] allChannels = new int[totalChannels];
     for (int i = 0; i < totalChannels; i++) {
       allChannels[i] = i;
     }
     shuffleArray(allChannels);
-    for (int i = 0; i < channelsPerUser; i++) {
+    for (int i = 0; i < noChannels; i++) {
       channels[i] = DEFAULT_CHANNEL_PREFIX + allChannels[i];
     }
     return channels;
