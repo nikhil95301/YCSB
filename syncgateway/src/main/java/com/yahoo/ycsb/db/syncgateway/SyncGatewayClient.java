@@ -1809,7 +1809,6 @@ public class SyncGatewayClient extends DB {
     values.forEach((k, v) -> {
         root.put(k, v.toString());
       });
-    System.out.println("The document is :" + root.toString());
     return root.toString();
   }
 
@@ -1824,7 +1823,7 @@ public class SyncGatewayClient extends DB {
   }
 
   private String[] getSetOfRandomChannels(int noChannels) {
-    String[] channels = new String[channelsPerUser];
+    String[] channels = new String[noChannels];
     int[] allChannels = new int[totalChannels];
     for (int i = 0; i < totalChannels; i++) {
       allChannels[i] = i;
