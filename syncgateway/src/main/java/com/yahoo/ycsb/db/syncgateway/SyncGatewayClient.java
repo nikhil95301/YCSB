@@ -95,7 +95,7 @@ public class SyncGatewayClient extends DB {
   private static final String DEFAULT_USERNAME_PREFIX = "sg-user-";
   private static final String DEFAULT_CHANNEL_PREFIX = "channel-";
   private static final String DEFAULT_USER_PASSWORD = "syncgateway.password";
-  private static final String USE_CAPELLA = "syncgateway.use_capella";
+  private static final String USE_CAPELLA = "syncgateway.usecapella";
   private static final int SG_LOAD_MODE_USERS = 0;
   private static final int SG_LOAD_MODE_DOCUMENTS = 1;
   private static final int SG_INSERT_MODE_BYKEY = 0;
@@ -147,7 +147,7 @@ public class SyncGatewayClient extends DB {
   private boolean includeDocWhenReadingFeed;
   private boolean starChannel;
   private int channelsPerGrant;
-  private boolean use_capella;
+  private boolean useCapella;
   private boolean grantAccessToAllUsers;
   private boolean grantAccessInScanOperation;
   private boolean isSgReplicator2;
@@ -206,11 +206,10 @@ public class SyncGatewayClient extends DB {
     } else {
       readMode = SG_READ_MODE_DOCUMENTS_WITH_REV;
     }
-    use_capella = props.getProperty(USE_CAPELLA, "false").equals("true");
-    if (use_capella) {
+    useCapella = props.getProperty(USE_CAPELLA, "false").equals("true");
+    if (useCapella) {
       http = "https://";
-    }
-    else{
+    } else{
       http = "http://";
     }
     totalUsers = Integer.valueOf(props.getProperty(SG_TOTAL_USERS, "1000"));
@@ -220,7 +219,6 @@ public class SyncGatewayClient extends DB {
     initUsers = props.getProperty(SG_INIT_USERS, "true").equals("true");
     channelsPerUser = Integer.valueOf(props.getProperty(SG_CHANNELS_PER_USER, "10"));
     channelsPerDocument = Integer.valueOf(props.getProperty(SG_CHANNELS_PER_DOCUMENT, "1"));
-    System.out.println("The number of channelsPerDocument is :" + channelsPerDocument);
     feedMode = props.getProperty(SG_FEED_MODE, "normal");
     if (!feedMode.equals("normal") && (!feedMode.equals("longpoll"))) {
       feedMode = "normal";
@@ -332,8 +330,8 @@ public class SyncGatewayClient extends DB {
 
   private Status readSingle(String key, HashMap<String, ByteIterator> result) {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + key;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + key;
     if (readMode == SG_READ_MODE_DOCUMENTS_WITH_REV && !isSgReplicator2) {
       String revisionID = getRevision(key);
       if (revisionID == null){
@@ -392,10 +390,10 @@ public class SyncGatewayClient extends DB {
     }
     String currentSequence = getLocalSequenceForUser(currentIterationUser);
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String fullUrl;
     int responseCode;
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
     if(isSgReplicator2){
       fullUrl += "&replicator2=true";
     }
@@ -427,7 +425,7 @@ public class SyncGatewayClient extends DB {
   private Status e2eUpdate(String table, String key, HashMap<String, ByteIterator> values) {
     int responseCode;
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     //assignRandomUserToCurrentIteration();
     currentIterationUser = e2euser;
     String requestBody = e2eBuildDocumentFromMap(key, values);
@@ -436,7 +434,7 @@ public class SyncGatewayClient extends DB {
       System.err.println("Revision for document " + key + " not found in local");
       return Status.UNEXPECTED_STATE;
     }
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
     HttpPut httpPutRequest = new HttpPut(fullUrl);
     Status result;
     int numOfRetries = 0;
@@ -480,10 +478,10 @@ public class SyncGatewayClient extends DB {
       return Status.OK;
     }
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String fullUrl;
     int responseCode;
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + key + "?rev=" + docRevision;
     String responsebodymap = null;
     String requestBody = null;
     try {
@@ -555,7 +553,7 @@ public class SyncGatewayClient extends DB {
 
   private Status deltaSyncInsertDocument(String table, String key, HashMap<String, ByteIterator> values) {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
 
     String requestBody = null;
     String fullUrl;
@@ -564,7 +562,7 @@ public class SyncGatewayClient extends DB {
     } else if(doctype.equals("nested")) {
       requestBody = buildnestedDocFromMap(key, values);
     }
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint;
     HttpPost httpPostRequest = new HttpPost(fullUrl);
     int responseCode;
     try {
@@ -578,12 +576,12 @@ public class SyncGatewayClient extends DB {
 
   private Status e2eInsertDocument(String table, String key, HashMap<String, ByteIterator> values) {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String requestBody = null;
     String fullUrl;
     currentIterationUser = e2euser;
     requestBody = e2eBuildDocumentFromMap(key, values);
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint;
     HttpPost httpPostRequest = new HttpPost(fullUrl);
     int responseCode;
     try {
@@ -600,7 +598,7 @@ public class SyncGatewayClient extends DB {
 
   private Status defaultInsertDocument(String table, String key, HashMap<String, ByteIterator> values) {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String requestBody;
     String fullUrl;
     String channel = null;
@@ -610,7 +608,7 @@ public class SyncGatewayClient extends DB {
       channel = getChannelForUser();
     }
     requestBody = buildDocumentWithChannel(key, values, channel);
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint;
     if(isSgReplicator2){
       fullUrl += "?replicator2=true";
     }
@@ -655,11 +653,11 @@ public class SyncGatewayClient extends DB {
 
   private Status insertAccessGrant(String userName) {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String requestBody;
     String fullUrl;
     requestBody = buildAccessGrantDocument(userName);
-    fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint;
+    fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint;
     HttpPost httpPostRequest = new HttpPost(fullUrl);
     int responseCode;
     try {
@@ -694,13 +692,13 @@ public class SyncGatewayClient extends DB {
 
   private void checkForChanges(String sequenceSince, String channel) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String includeDocsParam = "include_docs=false";
     if (includeDocWhenReadingFeed) {
       includeDocsParam = "include_docs=true";
     }
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=normal&" + includeDocsParam;
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -740,14 +738,14 @@ public class SyncGatewayClient extends DB {
 
   private void checkForChangesWithLimit(String sequenceSince, String limit) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String includeDocsParam = "include_docs=false";
     if (includeDocWhenReadingFeed) {
       includeDocsParam = "include_docs=true";
     }
     String changesFeedEndpoint = "_changes?since=" + sequenceSince +"&limit=" + limit + "&feed=normal&"
         + includeDocsParam;
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -796,10 +794,10 @@ public class SyncGatewayClient extends DB {
 
   private String defaultWaitForDocInChangeFeed2(String sequenceSince, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + getChannelForUser();
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -872,10 +870,10 @@ public class SyncGatewayClient extends DB {
 
   private void deltaSyncWaitForDocInChangeFeed2(String sequenceSince, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + getChannelForUser();
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -943,10 +941,10 @@ public class SyncGatewayClient extends DB {
 
   private String waitForDocInChangeFeed3(String sequenceSince, String channel, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + channel;
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -1025,10 +1023,10 @@ public class SyncGatewayClient extends DB {
 
   private String waitForDocInChangeFeed5(String sequenceSince, String channel, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + channel;
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -1128,10 +1126,10 @@ public class SyncGatewayClient extends DB {
 
   private void defaultWaitForDocInChangeFeed(String sequenceSince, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + getChannelForUser();
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -1190,10 +1188,10 @@ public class SyncGatewayClient extends DB {
 
   private void deltaSyncWaitForDocInChangeFeed(String sequenceSince, String key) throws IOException {
     String port = (useAuth) ? portPublic : portAdmin;
-    String url_prefix = (use_capella && useAuth) ? "wss://" : http;
+    String urlPrefix = (useCapella && useAuth) ? "wss://" : http;
     String changesFeedEndpoint = "_changes?since=" + sequenceSince + "&feed=" + feedMode +
         "&filter=sync_gateway/bychannel&channels=" + getChannelForUser();
-    String fullUrl = url_prefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
+    String fullUrl = urlPrefix + getRandomHost() + ":" + port + documentEndpoint + changesFeedEndpoint;
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
@@ -1811,7 +1809,7 @@ public class SyncGatewayClient extends DB {
     values.forEach((k, v) -> {
         root.put(k, v.toString());
       });
-      System.out.println("The document is :" + root.toString());
+    System.out.println("The document is :" + root.toString());
     return root.toString();
   }
 
