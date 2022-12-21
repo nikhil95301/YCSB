@@ -96,6 +96,8 @@ public class SyncGatewayClient extends DB {
   private static final String DEFAULT_CHANNEL_PREFIX = "channel-";
   private static final String DEFAULT_USER_PASSWORD = "syncgateway.password";
   private static final String USE_CAPELLA = "syncgateway.usecapella";
+  private static final String ADMIN_NAME = "syncgateway.adminname";
+  private static final String ADMIN_PASSWORD = "syncgateway.adminpassword";
   private static final int SG_LOAD_MODE_USERS = 0;
   private static final int SG_LOAD_MODE_DOCUMENTS = 1;
   private static final int SG_INSERT_MODE_BYKEY = 0;
@@ -138,6 +140,8 @@ public class SyncGatewayClient extends DB {
   private String e2euser;
   private String host;
   private String password;
+  private String adminName;
+  private String adminPassword;
   private String http;
   private int insertMode;
   private String sequencestart;
@@ -179,6 +183,8 @@ public class SyncGatewayClient extends DB {
     hosts = hostParam.split(",");
     host = hosts[rand.nextInt(hosts.length)];
     password = props.getProperty(DEFAULT_USER_PASSWORD, "password");
+    adminName = props.getProperty(ADMIN_NAME, "admin");
+    adminPassword = props.getProperty(ADMIN_PASSWORD, "Password123!");
     e2euser = props.getProperty(SG_E2E_USER, "sg-user-0");
     String channelListParam = props.getProperty(SG_E2E_CHANNEL_LIST, "channel-0");
     e2echannelList = channelListParam.split(",");
@@ -533,6 +539,9 @@ public class SyncGatewayClient extends DB {
   private Status insertUser(String table, String key, HashMap<String, ByteIterator> values) {
     String requestBody = buildUserDef();
     String fullUrl = http + getRandomHost() + ":" + portAdmin + createUserEndpoint;
+    if (useCapella) {
+      fullUrl += " --user" + adminName + ":" + adminPassword;
+    }
     HttpPost httpPostRequest = new HttpPost(fullUrl);
     int responseCode;
     try {
