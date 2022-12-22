@@ -539,10 +539,13 @@ public class SyncGatewayClient extends DB {
   private Status insertUser(String table, String key, HashMap<String, ByteIterator> values) {
     String requestBody = buildUserDef();
     String fullUrl = http + getRandomHost() + ":" + portAdmin + createUserEndpoint;
-    if (useCapella) {
-      fullUrl += " --user" + adminName + ":" + adminPassword;
-    }
     HttpPost httpPostRequest = new HttpPost(fullUrl);
+    if (useCapella) {
+      String auth = adminName + ":" + adminPassword;
+      byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+      String authHeader = "Basic " + new String(encodedAuth);
+      httpPostRequest.setHeader(HttpHeaders.AUTHORIZATION, authHeader);
+    }
     int responseCode;
     try {
       responseCode = httpExecute(httpPostRequest, requestBody);
