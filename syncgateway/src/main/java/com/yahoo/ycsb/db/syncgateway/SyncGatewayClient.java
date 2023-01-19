@@ -623,6 +623,7 @@ public class SyncGatewayClient extends DB {
     String lastseq = null;
     HttpPost httpPostRequest = new HttpPost(fullUrl);
     if (useCapella) {
+      assignRandomUserToCurrentIteration();
       String auth = currentIterationUser + ":" + password;
       byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
       String authHeader = "Basic " + new String(encodedAuth);
@@ -2104,7 +2105,7 @@ public class SyncGatewayClient extends DB {
             syncLocalSequenceWithSyncGatewayForUserAndGlobally(userName);
           } catch (Exception e) {
             System.err.println("Autorization failure for user " + userName + ", exiting...");
-            System.exit(1);
+            // System.exit(1);
           }
         }
         setLocalSequenceForUser(userName, sequencestart);
@@ -2129,7 +2130,18 @@ public class SyncGatewayClient extends DB {
     requestTimedout.setIsSatisfied(false);
     Thread timer = new Thread(new Timer(execTimeout, requestTimedout));
     timer.start();
-    HttpGet request = new HttpGet(http + getRandomHost() + ":" + portAdmin + documentEndpoint);
+    HttpGet request;
+    if (useCapella) {
+      request = new HttpGet(http + getRandomHost() + ":" + portPublic + documentEndpoint);
+    } else {
+      request = new HttpGet(http + getRandomHost() + ":" + portAdmin + documentEndpoint);
+    }
+    if (useCapella) {
+      String auth = userName + ":" + password;
+      byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+      String authHeader = "Basic " + new String(encodedAuth);
+      request.setHeader(HttpHeaders.AUTHORIZATION, authHeader);
+    }
     for (int i = 0; i < headers.length; i = i + 2) {
       request.setHeader(headers[i], headers[i + 1]);
     }
