@@ -39,6 +39,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -2115,7 +2116,8 @@ public class SyncGateway3Client extends DB {
     requestBuilder = requestBuilder.setConnectionRequestTimeout(readTimeout);
     requestBuilder = requestBuilder.setSocketTimeout(readTimeout);
     HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestBuilder.build());
-    return clientBuilder.setConnectionManagerShared(true).build();
+    return clientBuilder.setConnectionManagerShared(true)
+        .setRetryHandler(new DefaultHttpRequestRetryHandler(2, true)).build();
   }
 
   private net.spy.memcached.MemcachedClient createMemcachedClient(String memHost, int memPort)
