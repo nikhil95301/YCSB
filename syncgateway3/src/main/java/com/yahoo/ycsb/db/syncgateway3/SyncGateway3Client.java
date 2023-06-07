@@ -38,6 +38,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -2116,8 +2117,8 @@ public class SyncGateway3Client extends DB {
     requestBuilder = requestBuilder.setConnectionRequestTimeout(readTimeout);
     requestBuilder = requestBuilder.setSocketTimeout(readTimeout);
     HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestBuilder.build());
-    return clientBuilder.setConnectionManagerShared(true)
-        .setRetryHandler(new DefaultHttpRequestRetryHandler(2, true)).build();
+    return clientBuilder.setConnectionManagerShared(true).setRetryHandler(new DefaultHttpRequestRetryHandler(2, true))
+        .setConnectionReuseStrategy(new NoConnectionReuseStrategy()).build();
   }
 
   private net.spy.memcached.MemcachedClient createMemcachedClient(String memHost, int memPort)
