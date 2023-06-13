@@ -235,6 +235,13 @@ public class Couchbase3Client extends DB {
                   .trustStore(keyStore))
               .build();
           environment.eventBus().subscribe(System.out::println);
+        } else if (sslMode.equals("protostellar")) {
+          environment = ClusterEnvironment
+              .builder()
+              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+              .securityConfig(SecurityConfig.enableTls(true)
+                  .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
+              .build();
         } else {
           environment = ClusterEnvironment
               .builder()
@@ -244,8 +251,11 @@ public class Couchbase3Client extends DB {
         }
 
         clusterOptions = ClusterOptions.clusterOptions(username, password);
- 
-        if (!sslMode.equals("auth")) {
+
+        if (sslMode.equals("protostellar")) {
+          clusterOptions.environment(environment);
+          cluster = Cluster.connect(hostname, clusterOptions);
+        } else if (!sslMode.equals("auth")) {
           clusterOptions.environment(environment);
           Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
               SeedNode.create(hostname,
