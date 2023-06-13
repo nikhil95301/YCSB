@@ -209,46 +209,7 @@ public class Couchbase3Client extends DB {
           }
         }
 
-        if (sslMode.equals("data")) {
-          environment = ClusterEnvironment
-              .builder()
-              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-              .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
-              .securityConfig(SecurityConfig.enableTls(true)
-                  .trustCertificate(Paths.get(certificateFile)))
-              .build();
-        } else if (sslMode.equals("capella")) {
-          environment = ClusterEnvironment
-              .builder()
-              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-              .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints)
-                      .enableDnsSrv(true))
-              .securityConfig(SecurityConfig.enableTls(true)
-                      .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
-              .build();
-        } else if (sslMode.equals("auth")) {
-          environment = ClusterEnvironment
-              .builder()
-              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-              .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
-              .securityConfig(SecurityConfig.enableTls(true)
-                  .trustStore(keyStore))
-              .build();
-          environment.eventBus().subscribe(System.out::println);
-        } else if (sslMode.equals("protostellar")) {
-          environment = ClusterEnvironment
-              .builder()
-              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-              .securityConfig(SecurityConfig.enableTls(true)
-                  .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
-              .build();
-        } else {
-          environment = ClusterEnvironment
-              .builder()
-              .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-              .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
-              .build();
-        }
+        setClusterEnvironment(enableMutationToken);
 
         clusterOptions = ClusterOptions.clusterOptions(username, password);
 
@@ -280,6 +241,49 @@ public class Couchbase3Client extends DB {
       }
     }
     OPEN_CLIENTS.incrementAndGet();
+  }
+
+  protected void setClusterEnvironment(boolean enableMutationToken) {
+    if (sslMode.equals("data")) {
+      environment = ClusterEnvironment
+          .builder()
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
+          .securityConfig(SecurityConfig.enableTls(true)
+              .trustCertificate(Paths.get(certificateFile)))
+          .build();
+    } else if (sslMode.equals("capella")) {
+      environment = ClusterEnvironment
+          .builder()
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints)
+              .enableDnsSrv(true))
+          .securityConfig(SecurityConfig.enableTls(true)
+              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
+          .build();
+    } else if (sslMode.equals("auth")) {
+      environment = ClusterEnvironment
+          .builder()
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
+          .securityConfig(SecurityConfig.enableTls(true)
+              .trustStore(keyStore))
+          .build();
+      environment.eventBus().subscribe(System.out::println);
+    } else if (sslMode.equals("protostellar")) {
+      environment = ClusterEnvironment
+          .builder()
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .securityConfig(SecurityConfig.enableTls(true)
+              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
+          .build();
+    } else {
+      environment = ClusterEnvironment
+          .builder()
+          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
+          .build();
+    }
   }
 
   private static ReplicateTo parseReplicateTo(final String property) throws DBException {
