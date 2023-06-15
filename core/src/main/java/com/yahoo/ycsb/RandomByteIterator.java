@@ -38,16 +38,34 @@ public class RandomByteIterator extends ByteIterator {
     switch (buffer.length - base) {
     default:
       buffer[base + 5] = (byte) (((bytes >> 25) & 95) + ' ');
+      if (buffer[base + 5] == 47) {
+        buffer[base + 5]++;
+      }
     case 5:
       buffer[base + 4] = (byte) (((bytes >> 20) & 63) + ' ');
+      if (buffer[base + 4] == 47) {
+        buffer[base + 4]++;
+      }
     case 4:
       buffer[base + 3] = (byte) (((bytes >> 15) & 31) + ' ');
+      if (buffer[base + 3] == 47) {
+        buffer[base + 3]++;
+      }
     case 3:
       buffer[base + 2] = (byte) (((bytes >> 10) & 95) + ' ');
+      if (buffer[base + 2] == 47) {
+        buffer[base + 2]++;
+      }
     case 2:
       buffer[base + 1] = (byte) (((bytes >> 5) & 63) + ' ');
+      if (buffer[base + 1] == 47) {
+        buffer[base + 1]++;
+      }
     case 1:
       buffer[base + 0] = (byte) (((bytes) & 31) + ' ');
+      if (buffer[base + 0] == 47) {
+        buffer[base + 0]++;
+      }
     case 0:
       break;
     }
