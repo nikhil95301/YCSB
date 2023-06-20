@@ -274,6 +274,8 @@ public class Couchbase3Client extends DB {
       environment = ClusterEnvironment
           .builder()
           .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
+          .securityConfig(SecurityConfig.enableTls(true)
+              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
           .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
           .build();
     } else {
