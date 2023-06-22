@@ -114,6 +114,7 @@ public class Couchbase3Client extends DB {
   private static long kvTimeoutMillis;
   private static int kvEndpoints;
   private boolean upsert;
+  private boolean isProtostellar;
 
   private static KeyStore keyStore;
   private String sslMode;
@@ -155,6 +156,7 @@ public class Couchbase3Client extends DB {
     int numATRS = Integer.parseInt(props.getProperty("couchbase.atrs", "20480"));
 
     hostname = props.getProperty("couchbase.host", "127.0.0.1");
+    isProtostellar = hostname.startsWith("protostellar://");
     managerPort = Integer.parseInt(props.getProperty("couchbase.managerPort", "8091"));
     username = props.getProperty("couchbase.username", "Administrator");
 
@@ -212,12 +214,9 @@ public class Couchbase3Client extends DB {
         setClusterEnvironment(enableMutationToken);
 
         clusterOptions = ClusterOptions.clusterOptions(username, password);
+        clusterOptions.environment(environment);
 
-        if (sslMode.equals("protostellar")) {
-          clusterOptions.environment(environment);
-          cluster = Cluster.connect(hostname, clusterOptions);
-        } else if (!sslMode.equals("auth")) {
-          clusterOptions.environment(environment);
+        if (!sslMode.equals("auth") && !isProtostellar) {
           Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
               SeedNode.create(hostname,
                   Optional.of(kvPort),
@@ -270,15 +269,6 @@ public class Couchbase3Client extends DB {
               .trustStore(keyStore))
           .build();
       environment.eventBus().subscribe(System.out::println);
-    } else if (sslMode.equals("protostellar")) {
-      environment = ClusterEnvironment
-          .builder()
-          .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-          .securityConfig(SecurityConfig.enableTls(true)
-              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
-          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints)
-              .enableDnsSrv(true))
-          .build();
     } else {
       environment = ClusterEnvironment
           .builder()
