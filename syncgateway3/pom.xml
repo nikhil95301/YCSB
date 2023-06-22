@@ -28,8 +28,8 @@
   <properties>
 
     <tomcat.version>8.0.28</tomcat.version>
-    <httpclient.version>4.5.1</httpclient.version>
-    <httpcore.version>4.4.4</httpcore.version>
+    <httpclient.version>4.5.14</httpclient.version>
+    <httpcore.version>4.4.16</httpcore.version>
     <jackson.api.version>2.5.3</jackson.api.version>
     <memcached.api.version>2.11.7</memcached.api.version>
   </properties>
