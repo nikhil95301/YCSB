@@ -59,6 +59,8 @@ public class SyncGateway3Client extends DB {
   private static final String HTTP_CON_TIMEOUT = "rest.timeout.con";
   private static final String HTTP_READ_TIMEOUT = "rest.timeout.read";
   private static final String HTTP_EXEC_TIMEOUT = "rest.timeout.exec";
+  private static final String HTTP_CONN_TOTAL_MAX = "rest.conn.max";
+  private static final String HTTP_CONN_MAX_PER_ROUTE = "rest.conn.maxperroute";
   private static final String HTTP_HEADERS = "headers";
   private static final String SG_HOST = "syncgateway.host";
   private static final String SG_DB = "syncgateway.db";
@@ -152,6 +154,8 @@ public class SyncGateway3Client extends DB {
   private int conTimeout = 5000;
   private int readTimeout = 5000;
   private int execTimeout = 5000;
+  private int connMaxTotal = 100;
+  private int connMaxPerRoute = 20;
   private CloseableHttpClient restClient;
   private MemcachedClient memcachedClient;
   private String createUserEndpoint;
@@ -228,9 +232,17 @@ public class SyncGateway3Client extends DB {
     String feedReadingModeProp = props.getProperty(SG_FEED_READING_MODE, SG_FEED_READ_MODE_IDSONLY);
     includeDocWhenReadingFeed = feedReadingModeProp.equals(SG_FEED_READ_MODE_WITHDOCS);
     insertUsersStart = Integer.valueOf(props.getProperty(SG_INSERTUSERS_START, "0"));
+    // HttpClient settings
     conTimeout = Integer.valueOf(props.getProperty(HTTP_CON_TIMEOUT, "1")) * conTimeout;
     readTimeout = Integer.valueOf(props.getProperty(HTTP_READ_TIMEOUT, "1")) * readTimeout;
     execTimeout = Integer.valueOf(props.getProperty(HTTP_EXEC_TIMEOUT, "1")) * execTimeout;
+    int maxTotal = Integer.valueOf(props.getProperty(HTTP_CONN_TOTAL_MAX, "-1"));
+    if (maxTotal >= 0)
+      this.connMaxTotal = maxTotal;
+    int totalPerRoute = Integer.valueOf(props.getProperty(HTTP_CONN_MAX_PER_ROUTE, "-1"));
+    if (totalPerRoute >= 0)
+      this.connMaxPerRoute = totalPerRoute;
+
     headers = props.getProperty(HTTP_HEADERS, "Accept */* Content-Type application/json user-agent Mozilla/5.0 ").trim()
         .split(" ");
     String memcachedHost = props.getProperty(MEMCACHED_HOST, "localhost");
@@ -2118,7 +2130,9 @@ public class SyncGateway3Client extends DB {
     requestBuilder = requestBuilder.setConnectionRequestTimeout(readTimeout);
     requestBuilder = requestBuilder.setSocketTimeout(readTimeout);
     HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(requestBuilder.build());
-    return clientBuilder.setConnectionManagerShared(true).setRetryHandler(new DefaultHttpRequestRetryHandler(2, true))
+    return clientBuilder.setConnectionManagerShared(true)
+        .setMaxConnTotal(this.connMaxTotal).setMaxConnPerRoute(this.connMaxPerRoute)
+        .setRetryHandler(new DefaultHttpRequestRetryHandler(2, true))
         .setConnectionReuseStrategy(new NoConnectionReuseStrategy()).build();
   }
 
