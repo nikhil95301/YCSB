@@ -419,11 +419,6 @@ public class CoreWorkload extends Workload {
     //System.err.println("printing INSERT_COUNT_PROPERTY within " +
         //"Coreworkload init" + insertstart);
     // Confirm valid values for insertstart and insertcount in relation to recordcount
-    if (recordcount < (insertstart + insertcount)) {
-      System.err.println("Invalid combination of insertstart, insertcount and recordcount.");
-      System.err.println("recordcount must be bigger than insertstart + insertcount.");
-      System.exit(-1);
-    }
     zeropadding =
         Integer.parseInt(p.getProperty(ZERO_PADDING_PROPERTY, ZERO_PADDING_PROPERTY_DEFAULT));
 
