@@ -277,8 +277,8 @@ public class SyncGateway3Client extends DB {
       System.exit(1);
     }
 
-    collections = props.getProperty(Client.COLLECTIONS_PARAM, Client.COLLECTIONS_PARAM_DEFAULT).split(",");
-    scopes = props.getProperty(Client.SCOPES_PARAM, Client.SCOPES_PARAM_DEFAULT).split(",");
+    collections = props.getProperty(Client.COLLECTIONS_PARAM, _DEFAULT).split(",");
+    scopes = props.getProperty(Client.SCOPES_PARAM, _DEFAULT).split(",");
     usersPerCollection = totalUsers / (collections.length * scopes.length);
 
     int count = 0;
