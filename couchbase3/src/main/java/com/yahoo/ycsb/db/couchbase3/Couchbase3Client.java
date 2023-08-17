@@ -36,6 +36,8 @@ import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetOptions;
 import com.couchbase.client.java.kv.GetResult;
+import com.couchbase.client.java.kv.ScanTerm;
+import com.couchbase.client.java.kv.ScanResult;
 import com.couchbase.transactions.*;
 
 import com.couchbase.transactions.config.TransactionConfigBuilder;
@@ -55,7 +57,7 @@ import com.couchbase.client.java.codec.RawJsonTranscoder;
 
 import com.couchbase.client.java.kv.PersistTo;
 import com.couchbase.client.java.kv.ReplicateTo;
-
+import com.couchbase.client.java.kv.ScanType;
 import com.yahoo.ycsb.*;
 
 import java.io.*;
@@ -925,4 +927,63 @@ public class Couchbase3Client extends DB {
     return prefix + KEY_SEPARATOR + key;
   }
 
+  @Override
+  public Status rangescan(final String table, final String startkey, final String endkey,
+                          final int recordcount,
+                          final Vector<HashMap<String, ByteIterator>> result) {
+    // do range scan
+
+    final Collection collection = bucket.defaultCollection();
+
+    final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+    final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+
+    final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
+
+    collection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .forEach(data2::add);
+
+    for (int i = 0; i < data2.size(); i++) {
+      HashMap<String, ByteIterator> tuple = new HashMap<>();
+      decodeStringSource(data2.get(i).contentAs(String.class), null, tuple);
+      data.add(tuple);
+    }
+
+    for (int i = 0; i < data.size(); i++) {
+      System.out.println("The " + i + "-th data is: " + data.get(i));
+    }
+    result.addAll(data);
+    return Status.OK;
+  }
+
+  @Override
+  public Status rangescan(final String table, final String startkey, final String endkey,
+                          final int recordcount,
+                          final Vector<HashMap<String, ByteIterator>> result,
+                          String scope, String coll) {
+    // do range scan
+
+    final Collection collection = collectionenabled ? bucket.scope(scope).collection(coll) : bucket.defaultCollection();
+
+    final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+    final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+    final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
+    //final ReactiveCollection reactiveCollection = collection.reactive();
+    collection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .forEach(data2::add);
+
+    for (int i = 0; i < data2.size(); i++) {
+      HashMap<String, ByteIterator> tuple = new HashMap<>();
+      decodeStringSource(data2.get(i).contentAs(String.class), null, tuple);
+      data.add(tuple);
+    }
+
+    for (int i = 0; i < data.size(); i++) {
+      System.out.println("The " + i + "-th data is: " + data.get(i));
+    }
+    result.addAll(data);
+    return Status.OK;
+  }
 }

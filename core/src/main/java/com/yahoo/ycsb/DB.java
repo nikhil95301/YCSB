@@ -113,6 +113,16 @@ public abstract class DB {
     return Status.NOT_IMPLEMENTED;
   }
 
+  public Status rangescan(String table, String startkey, String endkey, int recordcount,
+                          Vector<HashMap<String, ByteIterator>> result){
+    return Status.NOT_IMPLEMENTED;
+  }
+
+  public Status rangescan(String table, String startkey, String endkey, int recordcount,
+                          Vector<HashMap<String, ByteIterator>> result, String scope, String collection){
+    return Status.NOT_IMPLEMENTED;
+  }
+
   /**
    * Update a record in the database. Any field/value pairs in the specified values HashMap will be written into the
    * record with the specified record key, overwriting any existing values with the same field name.
