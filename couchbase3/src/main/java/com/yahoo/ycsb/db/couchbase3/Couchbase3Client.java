@@ -941,7 +941,6 @@ public class Couchbase3Client extends DB {
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
 
     if (rangeScanSampling) {
-      System.out.println("enters range scan sampling");
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
     } else {
@@ -970,7 +969,6 @@ public class Couchbase3Client extends DB {
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
 
     if (rangeScanSampling) {
-      System.out.println("enters range scan sampling");
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
     } else {
