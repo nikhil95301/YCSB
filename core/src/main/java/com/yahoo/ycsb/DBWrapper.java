@@ -17,7 +17,6 @@
 
 package com.yahoo.ycsb;
 
-import java.util.Map;
 import com.yahoo.ycsb.measurements.Measurements;
 import org.apache.htrace.core.TraceScope;
 import org.apache.htrace.core.Tracer;
@@ -47,6 +46,7 @@ public class DBWrapper extends DB {
   private final String scopeStringInsert;
   private final String scopeStringRead;
   private final String scopeStringScan;
+  private final String scopeStringRangeScan;
   private final String scopeStringUpdate;
 
   public DBWrapper(final DB db, final Tracer tracer) {
@@ -60,6 +60,7 @@ public class DBWrapper extends DB {
     scopeStringInsert = simple + "#insert";
     scopeStringRead = simple + "#read";
     scopeStringScan = simple + "#scan";
+    scopeStringRangeScan = simple + "#rangescan";
     scopeStringUpdate = simple + "#update";
   }
 
@@ -187,6 +188,32 @@ public class DBWrapper extends DB {
       long en = System.nanoTime();
       measure("SCAN", res, ist, st, en);
       measurements.reportStatus("SCAN", res);
+      return res;
+    }
+  }
+
+  public Status rangescan(String table, String startkey, String endkey, int recordcount,
+                          Vector<HashMap<String, ByteIterator>> result) {
+    try (final TraceScope span = tracer.newScope(scopeStringScan)) {
+      long ist = measurements.getIntendedtartTimeNs();
+      long st = System.nanoTime();
+      Status res = db.rangescan(table, startkey, endkey, recordcount, result);
+      long en = System.nanoTime();
+      measure("RANGESCAN", res, ist, st, en);
+      measurements.reportStatus("RANGESCAN", res);
+      return res;
+    }
+  }
+
+  public Status rangescan(String table, String startkey, String endkey, int recordcount,
+                          Vector<HashMap<String, ByteIterator>> result, String scope, String coll) {
+    try (final TraceScope span = tracer.newScope(scopeStringScan)) {
+      long ist = measurements.getIntendedtartTimeNs();
+      long st = System.nanoTime();
+      Status res = db.rangescan(table, startkey, endkey, recordcount, result, scope, coll);
+      long en = System.nanoTime();
+      measure("RANGESCAN", res, ist, st, en);
+      measurements.reportStatus("RANGESCAN", res);
       return res;
     }
   }

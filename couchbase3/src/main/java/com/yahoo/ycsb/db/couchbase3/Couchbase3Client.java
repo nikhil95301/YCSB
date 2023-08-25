@@ -103,6 +103,7 @@ public class Couchbase3Client extends DB {
   private  volatile  HashSet errors = new HashSet<Throwable>();
 
   private boolean adhoc;
+  private boolean rangeScanSampling;
   private int maxParallelism;
   private String scanAllQuery;
   private String bucketName;
@@ -147,6 +148,7 @@ public class Couchbase3Client extends DB {
     }
 
     adhoc = props.getProperty("couchbase.adhoc", "false").equals("true");
+    rangeScanSampling = props.getProperty("couchbase.rangeScanSampling", "true").equals("true");
     maxParallelism = Integer.parseInt(props.getProperty("couchbase.maxParallelism", "1"));
     scanAllQuery =  "SELECT RAW meta().id FROM `" + bucketName +
         "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
@@ -927,7 +929,7 @@ public class Couchbase3Client extends DB {
     return prefix + KEY_SEPARATOR + key;
   }
 
-  @Override
+  //@Override
   public Status rangescan(final String table, final String startkey, final String endkey,
                           final int recordcount,
                           final Vector<HashMap<String, ByteIterator>> result) {
@@ -935,29 +937,27 @@ public class Couchbase3Client extends DB {
 
     final Collection collection = bucket.defaultCollection();
 
-    final ScanTerm startTerm = ScanTerm.inclusive(startkey);
-    final ScanTerm endTerm = ScanTerm.inclusive(endkey);
-
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
 
-    collection.scan(ScanType.rangeScan(startTerm, endTerm))
-              .forEach(data2::add);
+    if (rangeScanSampling) {
+      System.out.println("enters range scan sampling");
+      collection.scan(ScanType.samplingScan(recordcount))
+             .forEach(data2::add);
+    } else {
 
-    for (int i = 0; i < data2.size(); i++) {
-      HashMap<String, ByteIterator> tuple = new HashMap<>();
-      decodeStringSource(data2.get(i).contentAs(String.class), null, tuple);
-      data.add(tuple);
+      final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+      final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+
+      collection.scan(ScanType.rangeScan(startTerm, endTerm))
+                .forEach(data2::add);
     }
 
-    for (int i = 0; i < data.size(); i++) {
-      System.out.println("The " + i + "-th data is: " + data.get(i));
-    }
     result.addAll(data);
     return Status.OK;
   }
 
-  @Override
+  //@Override
   public Status rangescan(final String table, final String startkey, final String endkey,
                           final int recordcount,
                           final Vector<HashMap<String, ByteIterator>> result,
@@ -966,23 +966,22 @@ public class Couchbase3Client extends DB {
 
     final Collection collection = collectionenabled ? bucket.scope(scope).collection(coll) : bucket.defaultCollection();
 
-    final ScanTerm startTerm = ScanTerm.inclusive(startkey);
-    final ScanTerm endTerm = ScanTerm.inclusive(endkey);
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
-    //final ReactiveCollection reactiveCollection = collection.reactive();
-    collection.scan(ScanType.rangeScan(startTerm, endTerm))
-              .forEach(data2::add);
 
-    for (int i = 0; i < data2.size(); i++) {
-      HashMap<String, ByteIterator> tuple = new HashMap<>();
-      decodeStringSource(data2.get(i).contentAs(String.class), null, tuple);
-      data.add(tuple);
+    if (rangeScanSampling) {
+      System.out.println("enters range scan sampling");
+      collection.scan(ScanType.samplingScan(recordcount))
+             .forEach(data2::add);
+    } else {
+
+      final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+      final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+
+      collection.scan(ScanType.rangeScan(startTerm, endTerm))
+                .forEach(data2::add);
     }
 
-    for (int i = 0; i < data.size(); i++) {
-      System.out.println("The " + i + "-th data is: " + data.get(i));
-    }
     result.addAll(data);
     return Status.OK;
   }
