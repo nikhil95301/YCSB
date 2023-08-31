@@ -39,6 +39,7 @@ scanproportion=0.95
 insertproportion=0.05
 
 requestdistribution=sequential
+insertorder=ordered
 
 maxscanlength=100
 
