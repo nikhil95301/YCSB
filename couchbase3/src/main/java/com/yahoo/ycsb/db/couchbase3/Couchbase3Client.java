@@ -104,6 +104,7 @@ public class Couchbase3Client extends DB {
 
   private boolean adhoc;
   private boolean rangeScanSampling;
+  private boolean prefixScan;
   private int maxParallelism;
   private String scanAllQuery;
   private String bucketName;
@@ -148,20 +149,20 @@ public class Couchbase3Client extends DB {
     }
 
     adhoc = props.getProperty("couchbase.adhoc", "false").equals("true");
-    rangeScanSampling = props.getProperty("couchbase.rangeScanSampling", "true").equals("true");
+    rangeScanSampling = props.getProperty("couchbase.rangeScanSampling", "false").equals("true");
+    prefixScan = props.getProperty("couchbase.prefixScan", "false").equals("true");
+
     maxParallelism = Integer.parseInt(props.getProperty("couchbase.maxParallelism", "1"));
     scanAllQuery =  "SELECT RAW meta().id FROM `" + bucketName +
         "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     bucketName = props.getProperty("couchbase.bucket", "default");
     upsert = props.getProperty("couchbase.upsert", "false").equals("true");
 
-
     int numATRS = Integer.parseInt(props.getProperty("couchbase.atrs", "20480"));
 
     hostname = props.getProperty("couchbase.host", "127.0.0.1");
     managerPort = Integer.parseInt(props.getProperty("couchbase.managerPort", "8091"));
     username = props.getProperty("couchbase.username", "Administrator");
-
     password = props.getProperty("couchbase.password", "password");
 
     collectionenabled = props.getProperty(Client.COLLECTION_ENABLED_PROPERTY,
@@ -936,6 +937,7 @@ public class Couchbase3Client extends DB {
     // do range scan
 
     final Collection collection = bucket.defaultCollection();
+    final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
@@ -943,13 +945,18 @@ public class Couchbase3Client extends DB {
     if (rangeScanSampling) {
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
+    } else if (prefixScan) {
+      final String prefix = startkey.substring(0, startkey.length() - 14);
+      reactiveCollection.scan(ScanType.prefixScan(prefix))
+                        .take(recordcount)
+                        .blockLast();
     } else {
-
       final ScanTerm startTerm = ScanTerm.inclusive(startkey);
       final ScanTerm endTerm = ScanTerm.inclusive(endkey);
 
-      collection.scan(ScanType.rangeScan(startTerm, endTerm))
-                .forEach(data2::add);
+      reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+                        .take(recordcount)
+                        .blockLast();
     }
 
     result.addAll(data);
@@ -964,6 +971,7 @@ public class Couchbase3Client extends DB {
     // do range scan
 
     final Collection collection = collectionenabled ? bucket.scope(scope).collection(coll) : bucket.defaultCollection();
+    final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final List<ScanResult> data2 = new ArrayList<ScanResult>(recordcount);
@@ -971,13 +979,19 @@ public class Couchbase3Client extends DB {
     if (rangeScanSampling) {
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
+    } else if (prefixScan) {
+      final String prefix = startkey.substring(0, startkey.length() - 14);
+      reactiveCollection.scan(ScanType.prefixScan(prefix))
+                        .take(recordcount)
+                        .blockLast();
     } else {
 
       final ScanTerm startTerm = ScanTerm.inclusive(startkey);
       final ScanTerm endTerm = ScanTerm.inclusive(endkey);
 
-      collection.scan(ScanType.rangeScan(startTerm, endTerm))
-                .forEach(data2::add);
+      reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+                        .take(recordcount)
+                        .blockLast();
     }
 
     result.addAll(data);
