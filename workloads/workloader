@@ -38,8 +38,7 @@ updateproportion=0
 scanproportion=0.95
 insertproportion=0.05
 
-requestdistribution=sequential
-insertorder=ordered
+requestdistribution=zipfian
 
 maxscanlength=100
 

@@ -946,7 +946,7 @@ public class Couchbase3Client extends DB {
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
     } else if (prefixScan) {
-      final String prefix = startkey.substring(0, startkey.length() - 14);
+      final String prefix = startkey.substring(0, startkey.length() - 15);
       reactiveCollection.scan(ScanType.prefixScan(prefix))
                         .take(recordcount)
                         .blockLast();
@@ -980,7 +980,7 @@ public class Couchbase3Client extends DB {
       collection.scan(ScanType.samplingScan(recordcount))
              .forEach(data2::add);
     } else if (prefixScan) {
-      final String prefix = startkey.substring(0, startkey.length() - 14);
+      final String prefix = startkey.substring(0, startkey.length() - 15);
       reactiveCollection.scan(ScanType.prefixScan(prefix))
                         .take(recordcount)
                         .blockLast();
