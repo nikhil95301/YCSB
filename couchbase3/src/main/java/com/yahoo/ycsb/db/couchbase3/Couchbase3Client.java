@@ -755,27 +755,12 @@ public class Couchbase3Client extends DB {
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final String query =  "SELECT RAW meta().id FROM `" + bucketName +
-          "` WHERE meta().id >= $1 LIMIT $2";
-    final ReactiveCollection reactiveCollection = collection.reactive();
+          "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     reactiveCluster.query(query,
           queryOptions()
                 .adhoc(adhoc)
                 .maxParallelism(maxParallelism)
-                .parameters(JsonArray.from(formatId(table, startkey), recordcount)))
-          .flatMapMany(res -> {
-              return res.rowsAs(String.class);
-            })
-          .flatMap(id -> {
-              return reactiveCollection
-                  .get(id, GetOptions.getOptions().transcoder(RawJsonTranscoder.INSTANCE));
-            })
-          .map(getResult -> {
-              HashMap<String, ByteIterator> tuple = new HashMap<>();
-              decodeStringSource(getResult.contentAs(String.class), null, tuple);
-              return tuple;
-            })
-          .toStream()
-          .forEach(data::add);
+                .parameters(JsonArray.from(formatId(table, startkey), recordcount)));
 
     result.addAll(data);
     return Status.OK;
