@@ -37,7 +37,6 @@ import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetOptions;
 import com.couchbase.client.java.kv.GetResult;
 import com.couchbase.client.java.kv.ScanTerm;
-import com.couchbase.client.java.kv.ScanResult;
 import com.couchbase.transactions.*;
 
 import com.couchbase.transactions.config.TransactionConfigBuilder;
