@@ -56,6 +56,7 @@ import com.couchbase.client.java.codec.RawJsonTranscoder;
 
 import com.couchbase.client.java.kv.PersistTo;
 import com.couchbase.client.java.kv.ReplicateTo;
+import com.couchbase.client.java.kv.ScanResult;
 import com.couchbase.client.java.kv.ScanType;
 import com.yahoo.ycsb.*;
 
@@ -754,7 +755,7 @@ public class Couchbase3Client extends DB {
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final String query =  "SELECT RAW meta().id FROM `" + bucketName +
-          "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
+          "` WHERE meta().id >= $1 LIMIT $2";
     final ReactiveCollection reactiveCollection = collection.reactive();
     reactiveCluster.query(query,
           queryOptions()
@@ -939,22 +940,27 @@ public class Couchbase3Client extends DB {
     final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    reactor.core.publisher.Mono<List<ScanResult>> data2;
 
     if (rangeScanSampling) {
-      reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                        .sort();
+      data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+                        .sort()
+                        .collectList();
     } else if (prefixScan) {
       final String prefix = startkey.substring(0, startkey.length() - 15);
-      reactiveCollection.scan(ScanType.prefixScan(prefix))
+      data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
                         .take(recordcount)
-                        .sort();
+                        .sort()
+                        .collectList();
+
     } else {
       final ScanTerm startTerm = ScanTerm.inclusive(startkey);
       final ScanTerm endTerm = ScanTerm.inclusive(endkey);
 
-      reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+      data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
                         .take(recordcount)
-                        .sort();
+                        .sort()
+                        .collectList();
     }
 
     result.addAll(data);
