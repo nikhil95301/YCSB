@@ -755,12 +755,27 @@ public class Couchbase3Client extends DB {
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     final String query =  "SELECT RAW meta().id FROM `" + bucketName +
-          "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
+          "` WHERE meta().id >= $1 LIMIT $2";
+    final ReactiveCollection reactiveCollection = collection.reactive();
     reactiveCluster.query(query,
           queryOptions()
                 .adhoc(adhoc)
                 .maxParallelism(maxParallelism)
-                .parameters(JsonArray.from(formatId(table, startkey), recordcount)));
+                .parameters(JsonArray.from(formatId(table, startkey), recordcount)))
+          .flatMapMany(res -> {
+              return res.rowsAs(String.class);
+            })
+          .flatMap(id -> {
+              return reactiveCollection
+                  .get(id, GetOptions.getOptions().transcoder(RawJsonTranscoder.INSTANCE));
+            })
+          .map(getResult -> {
+              HashMap<String, ByteIterator> tuple = new HashMap<>();
+              decodeStringSource(getResult.contentAs(String.class), null, tuple);
+              return tuple;
+            })
+          .toStream()
+          .forEach(data::add);
 
     result.addAll(data);
     return Status.OK;
@@ -927,29 +942,35 @@ public class Couchbase3Client extends DB {
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
     reactor.core.publisher.Mono<List<ScanResult>> data2;
 
-    if (rangeScanSampling) {
-      data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                        .sort()
-                        .collectList();
-    } else if (prefixScan) {
-      final String prefix = startkey.substring(0, startkey.length() - 15);
-      data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
-                        .take(recordcount)
-                        .sort()
-                        .collectList();
+    try {
+      if (rangeScanSampling) {
+        data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+                          .sort()
+                          .collectList();
+      } else if (prefixScan) {
+        final String prefix = startkey.substring(0, startkey.length() - 15);
+        data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+                          .take(recordcount)
+                          .sort()
+                          .collectList();
 
-    } else {
-      final ScanTerm startTerm = ScanTerm.inclusive(startkey);
-      final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+      } else {
+        final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+        final ScanTerm endTerm = ScanTerm.inclusive(endkey);
 
-      data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
-                        .take(recordcount)
-                        .sort()
-                        .collectList();
+        data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+                          .take(recordcount)
+                          .sort()
+                          .collectList();
+      }
+
+      result.addAll(data);
+      return Status.OK;
+    } catch (Throwable t) {
+      errors.add(t);
+      System.err.println("scan failed with exception :" + t);
+      return Status.ERROR;
     }
-
-    result.addAll(data);
-    return Status.OK;
   }
 
   //@Override
@@ -963,26 +984,36 @@ public class Couchbase3Client extends DB {
     final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    reactor.core.publisher.Mono<List<ScanResult>> data2;
 
-    if (rangeScanSampling) {
-      reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                        .sort();
-    } else if (prefixScan) {
-      final String prefix = startkey.substring(0, startkey.length() - 15);
-      reactiveCollection.scan(ScanType.prefixScan(prefix))
-                        .take(recordcount)
-                        .sort();
-    } else {
+    try {
+      if (rangeScanSampling) {
+        data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+                          .sort()
+                          .collectList();
+      } else if (prefixScan) {
+        final String prefix = startkey.substring(0, startkey.length() - 15);
+        data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+                          .take(recordcount)
+                          .sort()
+                          .collectList();
 
-      final ScanTerm startTerm = ScanTerm.inclusive(startkey);
-      final ScanTerm endTerm = ScanTerm.inclusive(endkey);
+      } else {
+        final ScanTerm startTerm = ScanTerm.inclusive(startkey);
+        final ScanTerm endTerm = ScanTerm.inclusive(endkey);
 
-      reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
-                        .take(recordcount)
-                        .sort();
+        data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+                          .take(recordcount)
+                          .sort()
+                          .collectList();
+      }
+
+      result.addAll(data);
+      return Status.OK;
+    } catch (Throwable t) {
+      errors.add(t);
+      System.err.println("scan failed with exception :" + t);
+      return Status.ERROR;
     }
-
-    result.addAll(data);
-    return Status.OK;
   }
 }
