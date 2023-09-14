@@ -962,7 +962,7 @@ public class Couchbase3Client extends DB {
                           .take(recordcount)
                           .sort()
                           .blockLast();
-      }`
+      }
 
       result.addAll(data);
       return Status.OK;
