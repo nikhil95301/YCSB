@@ -940,19 +940,19 @@ public class Couchbase3Client extends DB {
     final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
-    reactor.core.publisher.Mono<List<ScanResult>> data2;
+    ScanResult data2;
 
     try {
       if (rangeScanSampling) {
         data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
                           .sort()
-                          .collectList();
+                          .blockLast();
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
         data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
                           .take(recordcount)
                           .sort()
-                          .collectList();
+                          .blockLast();
 
       } else {
         final ScanTerm startTerm = ScanTerm.inclusive(startkey);
@@ -961,8 +961,8 @@ public class Couchbase3Client extends DB {
         data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
                           .take(recordcount)
                           .sort()
-                          .collectList();
-      }
+                          .blockLast();
+      }`
 
       result.addAll(data);
       return Status.OK;
@@ -984,19 +984,19 @@ public class Couchbase3Client extends DB {
     final ReactiveCollection reactiveCollection = collection.reactive();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
-    reactor.core.publisher.Mono<List<ScanResult>> data2;
+    ScanResult data2;
 
     try {
       if (rangeScanSampling) {
         data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
                           .sort()
-                          .collectList();
+                          .blockLast();
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
         data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
                           .take(recordcount)
                           .sort()
-                          .collectList();
+                          .blockLast();
 
       } else {
         final ScanTerm startTerm = ScanTerm.inclusive(startkey);
@@ -1005,7 +1005,7 @@ public class Couchbase3Client extends DB {
         data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
                           .take(recordcount)
                           .sort()
-                          .collectList();
+                          .blockLast();
       }
 
       result.addAll(data);
