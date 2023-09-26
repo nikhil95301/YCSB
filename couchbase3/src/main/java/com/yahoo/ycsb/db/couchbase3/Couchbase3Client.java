@@ -945,13 +945,13 @@ public class Couchbase3Client extends DB {
     try {
       if (rangeScanSampling) {
         data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
         data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
                           .take(recordcount)
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
 
       } else {
@@ -960,7 +960,7 @@ public class Couchbase3Client extends DB {
 
         data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
                           .take(recordcount)
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
       }
 
@@ -989,13 +989,13 @@ public class Couchbase3Client extends DB {
     try {
       if (rangeScanSampling) {
         data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
         data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
                           .take(recordcount)
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
 
       } else {
@@ -1004,7 +1004,7 @@ public class Couchbase3Client extends DB {
 
         data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
                           .take(recordcount)
-                          .sort()
+                          .sort(Comparator.comparing(ScanResult::id))
                           .blockLast();
       }
 
