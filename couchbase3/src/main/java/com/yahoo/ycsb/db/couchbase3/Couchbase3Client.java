@@ -105,6 +105,7 @@ public class Couchbase3Client extends DB {
   private boolean adhoc;
   private boolean rangeScanSampling;
   private boolean prefixScan;
+  private boolean ordered;
   private int maxParallelism;
   private String scanAllQuery;
   private String bucketName;
@@ -151,6 +152,7 @@ public class Couchbase3Client extends DB {
     adhoc = props.getProperty("couchbase.adhoc", "false").equals("true");
     rangeScanSampling = props.getProperty("couchbase.rangeScanSampling", "false").equals("true");
     prefixScan = props.getProperty("couchbase.prefixScan", "false").equals("true");
+    ordered = props.getProperty("couchbase.ordered", "true").equals("true");
 
     maxParallelism = Integer.parseInt(props.getProperty("couchbase.maxParallelism", "1"));
     scanAllQuery =  "SELECT RAW meta().id FROM `" + bucketName +
@@ -754,8 +756,14 @@ public class Couchbase3Client extends DB {
     final Collection collection = bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
-    final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+    if (ordered) {
+      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+          "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
+    }
+    else {
+      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 LIMIT $2";
+    }
     final ReactiveCollection reactiveCollection = collection.reactive();
     reactiveCluster.query(query,
           queryOptions()
@@ -786,9 +794,14 @@ public class Couchbase3Client extends DB {
     final Collection collection = collectionenabled ? bucket.scope(scope).collection(coll) : bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
-    final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
+    if (ordered) {
+      final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
           "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
-
+    }
+    else {
+      final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
+          "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 LIMIT $2";
+    }
     final ReactiveCollection reactiveCollection = collection.reactive();
     reactiveCluster.query(query,
           queryOptions()
@@ -830,8 +843,14 @@ public class Couchbase3Client extends DB {
     final Collection collection = bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
-    final String query =  "SELECT RAW meta().id FROM `" + bucketName +
-        "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
+    if (ordered) {
+      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+          "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
+    }
+    else {
+      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+          "` WHERE meta().id >= $1 LIMIT $2";
+    }
     final ReactiveCollection reactiveCollection = collection.reactive();
     reactiveCluster.query(query,
         queryOptions()
@@ -944,24 +963,42 @@ public class Couchbase3Client extends DB {
 
     try {
       if (rangeScanSampling) {
-        data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+              .blockLast();
+        }
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
-        data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
-                          .take(recordcount)
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
-
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+              .take(recordcount)
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+              .take(recordcount)
+              .blockLast();
+        }
       } else {
         final ScanTerm startTerm = ScanTerm.inclusive(startkey);
         final ScanTerm endTerm = ScanTerm.inclusive(endkey);
-
-        data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
-                          .take(recordcount)
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .take(recordcount)
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .take(recordcount)
+              .blockLast();
+        }
       }
 
       result.addAll(data);
@@ -988,24 +1025,42 @@ public class Couchbase3Client extends DB {
 
     try {
       if (rangeScanSampling) {
-        data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
+              .blockLast();
+        }
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
-        data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
-                          .take(recordcount)
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
-
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+              .take(recordcount)
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+              .take(recordcount)
+              .blockLast();
+        }
       } else {
         final ScanTerm startTerm = ScanTerm.inclusive(startkey);
         final ScanTerm endTerm = ScanTerm.inclusive(endkey);
-
-        data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
-                          .take(recordcount)
-                          .sort(Comparator.comparing(ScanResult::id))
-                          .blockLast();
+        if (ordered) {
+          data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .take(recordcount)
+              .sort(Comparator.comparing(ScanResult::id))
+              .blockLast();
+        }
+        else {
+          data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
+              .take(recordcount)
+              .blockLast();
+        }
       }
 
       result.addAll(data);

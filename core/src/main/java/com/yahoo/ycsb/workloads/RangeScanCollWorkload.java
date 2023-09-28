@@ -68,6 +68,7 @@ public class RangeScanCollWorkload extends CustomCollectionWorkload {
 
       db.rangescan(table, startkeyname, endkeyname, len, new Vector<HashMap<String, ByteIterator>>(),
                    scopename, collname);
+      return;
     }
 
     db.scan(table, startkeyname, len, fields, new Vector<HashMap<String, ByteIterator>>(), scopename, collname);
