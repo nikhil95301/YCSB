@@ -205,10 +205,8 @@ public class Couchbase3Client extends DB {
         if (sslMode.equals("auth")){
           try {
             char[] pass = certKeystorePassword.toCharArray();
-
             File keystoreFile = new File(certKeystoreFile);
             FileInputStream is = new FileInputStream(keystoreFile);
-
             keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, pass);
           } catch (Exception e) {
@@ -759,8 +757,7 @@ public class Couchbase3Client extends DB {
     if (ordered) {
       final String query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
-    }
-    else {
+    } else {
       final String query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 LIMIT $2";
     }
@@ -797,8 +794,7 @@ public class Couchbase3Client extends DB {
     if (ordered) {
       final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
           "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
-    }
-    else {
+    } else {
       final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
           "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 LIMIT $2";
     }
@@ -846,8 +842,7 @@ public class Couchbase3Client extends DB {
     if (ordered) {
       final String query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
-    }
-    else {
+    } else {
       final String query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 LIMIT $2";
     }
@@ -967,8 +962,7 @@ public class Couchbase3Client extends DB {
           data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
               .blockLast();
         }
@@ -979,8 +973,7 @@ public class Couchbase3Client extends DB {
               .take(recordcount)
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
               .take(recordcount)
               .blockLast();
@@ -993,8 +986,7 @@ public class Couchbase3Client extends DB {
               .take(recordcount)
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
               .take(recordcount)
               .blockLast();
@@ -1029,8 +1021,7 @@ public class Couchbase3Client extends DB {
           data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.samplingScan(recordcount))
               .blockLast();
         }
@@ -1041,8 +1032,7 @@ public class Couchbase3Client extends DB {
               .take(recordcount)
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
               .take(recordcount)
               .blockLast();
@@ -1055,8 +1045,7 @@ public class Couchbase3Client extends DB {
               .take(recordcount)
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
-        }
-        else {
+        } else {
           data2 = reactiveCollection.scan(ScanType.rangeScan(startTerm, endTerm))
               .take(recordcount)
               .blockLast();
