@@ -754,11 +754,12 @@ public class Couchbase3Client extends DB {
     final Collection collection = bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    final String query;
     if (ordered) {
-      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+      query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     } else {
-      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+      query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 LIMIT $2";
     }
     final ReactiveCollection reactiveCollection = collection.reactive();
@@ -791,11 +792,12 @@ public class Couchbase3Client extends DB {
     final Collection collection = collectionenabled ? bucket.scope(scope).collection(coll) : bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    final String query;
     if (ordered) {
-      final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
+      query =  "SELECT RAW meta().id FROM default:`" + bucketName +
           "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     } else {
-      final String query =  "SELECT RAW meta().id FROM default:`" + bucketName +
+      query =  "SELECT RAW meta().id FROM default:`" + bucketName +
           "`.`" + scope + "`.`"+ coll + "` WHERE meta().id >= $1 LIMIT $2";
     }
     final ReactiveCollection reactiveCollection = collection.reactive();
@@ -839,11 +841,12 @@ public class Couchbase3Client extends DB {
     final Collection collection = bucket.defaultCollection();
 
     final List<HashMap<String, ByteIterator>> data = new ArrayList<HashMap<String, ByteIterator>>(recordcount);
+    final String query;
     if (ordered) {
-      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+      query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     } else {
-      final String query =  "SELECT RAW meta().id FROM `" + bucketName +
+      query =  "SELECT RAW meta().id FROM `" + bucketName +
           "` WHERE meta().id >= $1 LIMIT $2";
     }
     final ReactiveCollection reactiveCollection = collection.reactive();
