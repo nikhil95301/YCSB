@@ -129,8 +129,28 @@ public class OneMeasurementHistogram extends OneMeasurement {
 
     long opcounter=0;
     boolean done95th = false;
+    boolean done60th = false;
+    boolean done75th = false;
+    boolean done25th = false;
+    boolean done85th = false;
     for (int i = 0; i < buckets; i++) {
       opcounter += histogram[i];
+      if ((!done25th) && (((double) opcounter) / ((double) operations) >= 0.25)) {
+        exporter.write(getName(), "25thPercentileLatency(us)", i * 1000);
+        done25th = true;
+      }
+      if ((!done60th) && (((double) opcounter) / ((double) operations) >= 0.60)) {
+        exporter.write(getName(), "60thPercentileLatency(us)", i * 1000);
+        done60th = true;
+      }
+      if ((!done75th) && (((double) opcounter) / ((double) operations) >= 0.75)) {
+        exporter.write(getName(), "75thPercentileLatency(us)", i * 1000);
+        done75th = true;
+      }
+      if ((!done85th) && (((double) opcounter) / ((double) operations) >= 0.85)) {
+        exporter.write(getName(), "85thPercentileLatency(us)", i * 1000);
+        done85th = true;
+      }
       if ((!done95th) && (((double) opcounter) / ((double) operations) >= 0.95)) {
         exporter.write(getName(), "95thPercentileLatency(us)", i * 1000);
         done95th = true;
