@@ -128,16 +128,21 @@ public class OneMeasurementHistogram extends OneMeasurement {
     exporter.write(getName(), "MaxLatency(us)", max);
 
     long opcounter=0;
-    boolean done95th = false;
+    boolean done25th = false;
+    boolean done50th = false;
     boolean done60th = false;
     boolean done75th = false;
-    boolean done25th = false;
     boolean done85th = false;
+    boolean done95th = false;
     for (int i = 0; i < buckets; i++) {
       opcounter += histogram[i];
       if ((!done25th) && (((double) opcounter) / ((double) operations) >= 0.25)) {
         exporter.write(getName(), "25thPercentileLatency(us)", i * 1000);
         done25th = true;
+      }
+      if ((!done50th) && (((double) opcounter) / ((double) operations) >= 0.50)) {
+        exporter.write(getName(), "50thPercentileLatency(us)", i * 1000);
+        done60th = true;
       }
       if ((!done60th) && (((double) opcounter) / ((double) operations) >= 0.60)) {
         exporter.write(getName(), "60thPercentileLatency(us)", i * 1000);
