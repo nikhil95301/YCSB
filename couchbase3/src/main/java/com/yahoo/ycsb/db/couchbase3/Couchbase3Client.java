@@ -18,6 +18,8 @@
 package com.yahoo.ycsb.db.couchbase3;
 
 
+import com.couchbase.client.core.cnc.Event;
+import com.couchbase.client.core.cnc.events.request.RequestRetryScheduledEvent;
 import com.couchbase.client.core.deps.com.fasterxml.jackson.databind.JsonNode;
 import com.couchbase.client.core.deps.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import com.couchbase.client.core.env.IoConfig;
@@ -248,6 +250,12 @@ public class Couchbase3Client extends DB {
               .build();
         }
 
+        environment.eventBus().subscribe(event -> {
+          if (isRangeScanRetry(event)) {
+            System.out.println(event);
+          }
+        });
+
         clusterOptions = ClusterOptions.clusterOptions(username, password);
  
         if (!sslMode.equals("auth")) {
@@ -275,6 +283,11 @@ public class Couchbase3Client extends DB {
       }
     }
     OPEN_CLIENTS.incrementAndGet();
+  }
+
+  private static boolean isRangeScanRetry(Event e) {
+    return (e instanceof RequestRetryScheduledEvent)
+      && ((RequestRetryScheduledEvent) e).requestClass().getSimpleName().startsWith("RangeScan");
   }
 
   private static ReplicateTo parseReplicateTo(final String property) throws DBException {
