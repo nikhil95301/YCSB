@@ -249,15 +249,12 @@ public class Couchbase3Client extends DB {
               .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
               .build();
         }
-
         environment.eventBus().subscribe(event -> {
-          if (isRangeScanRetry(event)) {
-            System.out.println(event);
-          }
-        });
-
+            if (isRangeScanRetry(event)) {
+              System.out.println(event);
+            }
+          });
         clusterOptions = ClusterOptions.clusterOptions(username, password);
- 
         if (!sslMode.equals("auth")) {
           clusterOptions.environment(environment);
           Set<SeedNode> seedNodes = new HashSet<>(Arrays.asList(
@@ -268,10 +265,8 @@ public class Couchbase3Client extends DB {
         } else {
           cluster = Cluster.connect(hostname, clusterOptions);
         }
-
         reactiveCluster = cluster.reactive();
         bucket = cluster.bucket(bucketName);
-
         if ((transactions == null) && transactionEnabled) {
           transactions = Transactions.create(cluster, TransactionConfigBuilder.create()
               .durabilityLevel(transDurabilityLevel)
