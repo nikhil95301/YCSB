@@ -251,7 +251,7 @@ public class Couchbase3Client extends DB {
         }
         environment.eventBus().subscribe(event -> {
             if (isRangeScanRetry(event)) {
-              System.out.println(event);
+              System.err.println(event);
             }
           });
         clusterOptions = ClusterOptions.clusterOptions(username, password);
