@@ -252,6 +252,14 @@ public class Couchbase3Client extends DB {
         environment.eventBus().subscribe(event -> {
             if (isRangeScanRetry(event)) {
               System.err.println(event);
+              System.err.println("Range scan retry occurred");
+            }
+          });
+        environment.eventBus().subscribe(event -> {
+            // handle events as they arrive
+            if (event.severity() == Event.Severity.INFO || event.severity() == Event.Severity.WARN) {
+              System.err.println(event);
+              System.err.println("Regular retry occurred");
             }
           });
         clusterOptions = ClusterOptions.clusterOptions(username, password);
