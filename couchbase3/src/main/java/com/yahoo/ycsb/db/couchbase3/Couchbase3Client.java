@@ -131,14 +131,12 @@ public class Couchbase3Client extends DB {
   @Override
   public void init() throws DBException {
     Properties props = getProperties();
-
     boolean outOfOrderExecution = Boolean.parseBoolean(props.getProperty("couchbase.outOfOrderExecution", "false"));
     if (outOfOrderExecution) {
       System.setProperty("com.couchbase.unorderedExecutionEnabled", "true");
     } else {
       System.setProperty("com.couchbase.unorderedExecutionEnabled", "false");
     }
-
     bucketName = props.getProperty("couchbase.bucket", "ycsb");
     // durability options
     String rawDurabilityLevel = props.getProperty("couchbase.durability", null);
@@ -150,60 +148,47 @@ public class Couchbase3Client extends DB {
       durabilityLevel = parseDurabilityLevel(rawDurabilityLevel);
       useDurabilityLevels = true;
     }
-
     adhoc = props.getProperty("couchbase.adhoc", "false").equals("true");
     rangeScanSampling = props.getProperty("couchbase.rangeScanSampling", "false").equals("true");
     prefixScan = props.getProperty("couchbase.prefixScan", "false").equals("true");
     ordered = props.getProperty("couchbase.ordered", "true").equals("true");
-
     maxParallelism = Integer.parseInt(props.getProperty("couchbase.maxParallelism", "1"));
     scanAllQuery =  "SELECT RAW meta().id FROM `" + bucketName +
         "` WHERE meta().id >= $1 ORDER BY meta().id LIMIT $2";
     bucketName = props.getProperty("couchbase.bucket", "default");
     upsert = props.getProperty("couchbase.upsert", "false").equals("true");
-
     int numATRS = Integer.parseInt(props.getProperty("couchbase.atrs", "20480"));
-
     hostname = props.getProperty("couchbase.host", "127.0.0.1");
     managerPort = Integer.parseInt(props.getProperty("couchbase.managerPort", "8091"));
     username = props.getProperty("couchbase.username", "Administrator");
     password = props.getProperty("couchbase.password", "password");
-
     collectionenabled = props.getProperty(Client.COLLECTION_ENABLED_PROPERTY,
         Client.COLLECTION_ENABLED_DEFAULT).equals("true");
-
     certKeystoreFile = props.getProperty("couchbase.certKeystoreFile", "");
     certKeystorePassword = props.getProperty("couchbase.certKeystorePassword", "");
     sslMode = props.getProperty("couchbase.sslMode", "none");
     certificateFile = props.getProperty("couchbase.certificateFile", "none");
-
     if (sslMode.equals("none")) {
       kvPort = Integer.parseInt(props.getProperty("couchbase.kvPort", "11210"));
     } else {
       kvPort = Integer.parseInt(props.getProperty("couchbase.kvPort", "11207"));
     }
-
     synchronized (INIT_COORDINATOR) {
       if (environment == null) {
-
         boolean enableMutationToken = Boolean.parseBoolean(props.getProperty("couchbase.enableMutationToken", "false"));
-
         kvTimeoutMillis = Integer.parseInt(props.getProperty("couchbase.kvTimeoutMillis", "60000"));
         kvEndpoints = Integer.parseInt(props.getProperty("couchbase.kvEndpoints", "1"));
-
         transactionEnabled = Boolean.parseBoolean(props.getProperty("couchbase.transactionsEnabled", "false"));
         try {
           durabilityLevel = parseDurabilityLevel(props.getProperty("couchbase.durability", "0"));
         } catch (DBException e) {
           System.out.println("Failed to parse Durability Level");
         }
-
         try {
           transDurabilityLevel = parsetransactionDurabilityLevel(props.getProperty("couchbase.durability", "0"));
         } catch (DBException e) {
           System.out.println("Failed to parse TransactionDurability Level");
         }
-
         if (sslMode.equals("auth")){
           try {
             char[] pass = certKeystorePassword.toCharArray();
@@ -215,7 +200,6 @@ public class Couchbase3Client extends DB {
             e.printStackTrace();
           }
         }
-
         if (sslMode.equals("data")) {
           environment = ClusterEnvironment
               .builder()
