@@ -76,6 +76,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import static com.couchbase.client.java.kv.ScanOptions.scanOptions;
+
 /**
  * Full YCSB implementation based on the new Couchbase Java SDK 3.x.
  */
@@ -241,7 +243,7 @@ public class Couchbase3Client extends DB {
           });
         environment.eventBus().subscribe(event -> {
             // handle events as they arrive
-            if (event.severity() == Event.Severity.INFO || event.severity() == Event.Severity.WARN) {
+            if (isRetry(event)) {
               System.err.println(event);
               System.err.println("Regular retry occurred");
             }
@@ -270,6 +272,10 @@ public class Couchbase3Client extends DB {
       }
     }
     OPEN_CLIENTS.incrementAndGet();
+  }
+
+  private static boolean isRetry(Event e) {
+    return (e instanceof RequestRetryScheduledEvent);
   }
 
   private static boolean isRangeScanRetry(Event e) {
@@ -972,12 +978,14 @@ public class Couchbase3Client extends DB {
       } else if (prefixScan) {
         final String prefix = startkey.substring(0, startkey.length() - 15);
         if (ordered) {
-          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix),
+                                          scanOptions().idsOnly(true))
               .take(recordcount)
               .sort(Comparator.comparing(ScanResult::id))
               .blockLast();
         } else {
-          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix))
+          data2 = reactiveCollection.scan(ScanType.prefixScan(prefix),
+                                          scanOptions().idsOnly(true))
               .take(recordcount)
               .blockLast();
         }
