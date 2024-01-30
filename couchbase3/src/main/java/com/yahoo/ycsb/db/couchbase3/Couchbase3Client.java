@@ -156,7 +156,7 @@ public class Couchbase3Client extends DB {
     int numATRS = Integer.parseInt(props.getProperty("couchbase.atrs", "20480"));
 
     hostname = props.getProperty("couchbase.host", "127.0.0.1");
-    isProtostellar = hostname.startsWith("protostellar://");
+    isProtostellar = hostname.startsWith("couchbase2://");
     managerPort = Integer.parseInt(props.getProperty("couchbase.managerPort", "8091"));
     username = props.getProperty("couchbase.username", "Administrator");
 
