@@ -31,24 +31,6 @@ LICENSE file.
     <name>Couchbase Java SDK 3.x Binding</name>
     <packaging>jar</packaging>
 
-    <properties>
-      <slf4j.version>2.0.7</slf4j.version>
-      <opentelemetry.version>1.19.0</opentelemetry.version>
-      <couchbase.metrics.version>0.4.7</couchbase.metrics.version>
-    </properties>
-
-    <dependencyManagement>
-      <dependencies>
-        <dependency>
-          <groupId>io.opentelemetry</groupId>
-          <artifactId>opentelemetry-bom</artifactId>
-          <version>${opentelemetry.version}</version>
-          <type>pom</type>
-          <scope>import</scope>
-        </dependency>
-      </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>com.couchbase.client</groupId>
@@ -67,71 +49,9 @@ LICENSE file.
             <scope>provided</scope>
         </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-          <groupId>io.opentelemetry</groupId>
-          <artifactId>opentelemetry-api</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-sdk</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-sdk-common</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-sdk-metrics</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-otlp-common</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-logging-otlp</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-logging</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-semconv</artifactId>
-        <version>${opentelemetry.version}-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-sdk-logs</artifactId>
-        <version>${opentelemetry.version}-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-prometheus</artifactId>
-        <version>${opentelemetry.version}-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>com.couchbase.client</groupId>
-        <artifactId>metrics-opentelemetry</artifactId>
-        <version>${couchbase.metrics.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-otlp</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>com.squareup.okhttp3</groupId>
-        <artifactId>logging-interceptor</artifactId>
-        <version>4.11.0</version>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.2.3</version>
       </dependency>
     </dependencies>
 

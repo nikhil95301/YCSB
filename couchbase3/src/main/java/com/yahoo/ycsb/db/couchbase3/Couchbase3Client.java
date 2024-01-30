@@ -17,13 +17,10 @@
 
 package com.yahoo.ycsb.db.couchbase3;
 
-import com.couchbase.client.core.cnc.Meter;
-import com.couchbase.client.core.cnc.metrics.NoopMeter;
+
 import com.couchbase.client.core.deps.com.fasterxml.jackson.databind.JsonNode;
 import com.couchbase.client.core.deps.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import com.couchbase.client.core.env.IoConfig;
-import com.couchbase.client.core.env.LoggerConfig;
-import com.couchbase.client.core.env.LoggingMeterConfig;
 import com.couchbase.client.core.env.SeedNode;
 import com.couchbase.client.core.env.SecurityConfig;
 import com.couchbase.client.core.env.TimeoutConfig;
@@ -34,7 +31,6 @@ import com.couchbase.client.java.ReactiveCluster;
 import com.couchbase.client.java.Collection;
 import com.couchbase.client.java.ReactiveCollection;
 import com.couchbase.client.java.env.ClusterEnvironment;
-import com.couchbase.client.java.env.ClusterEnvironment.Builder;
 import com.couchbase.client.java.json.JacksonTransformers;
 import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
@@ -59,23 +55,8 @@ import com.couchbase.client.java.codec.RawJsonTranscoder;
 
 import com.couchbase.client.java.kv.PersistTo;
 import com.couchbase.client.java.kv.ReplicateTo;
-import com.couchbase.client.metrics.opentelemetry.OpenTelemetryMeter;
-import com.yahoo.ycsb.*;
 
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.exporter.logging.LoggingMetricExporter;
-import io.opentelemetry.exporter.logging.SystemOutLogRecordExporter;
-import io.opentelemetry.exporter.logging.otlp.OtlpJsonLoggingSpanExporter;
-import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.logs.SdkLoggerProvider;
-import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
-import io.opentelemetry.sdk.logs.export.LogRecordExporter;
-import io.opentelemetry.sdk.metrics.SdkMeterProvider;
-import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
-import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
-import io.opentelemetry.sdk.trace.export.SpanExporter;
+import com.yahoo.ycsb.*;
 
 import java.io.*;
 
@@ -87,7 +68,6 @@ import java.time.Duration;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -142,14 +122,6 @@ public class Couchbase3Client extends DB {
   private String certKeystoreFile;
   private String certKeystorePassword;
 
-  // Metrics & Logging
-  protected MetricsReportingManager metricsManager;
-  protected String metrics;
-  protected boolean enableLogging;
-  protected long emitIntervalSec;
-  protected String logLevel;
-  private String metricsStore;
-
   @Override
   public void init() throws DBException {
     Properties props = getProperties();
@@ -203,13 +175,6 @@ public class Couchbase3Client extends DB {
     } else {
       kvPort = Integer.parseInt(props.getProperty("couchbase.kvPort", "11207"));
     }
-    // Prepare a metrics collection setup
-    // TODO change the defaults to null & false before merging
-    this.enableLogging = Boolean.parseBoolean(props.getProperty("couchbase.logging.enabled", "true"));
-    this.logLevel = props.getProperty("couchbase.logging.level", "off");
-    this.emitIntervalSec = Long.parseLong(props.getProperty("couchbase.logging.interval", "60"));
-    this.metrics = props.getProperty("couchbase.metrics", "none"); // Otel
-    this.metricsStore = props.getProperty("couchbase.metrics.store", "honeycomb"); // local, honeycomb
 
     synchronized (INIT_COORDINATOR) {
       if (environment == null) {
@@ -278,43 +243,39 @@ public class Couchbase3Client extends DB {
   }
 
   protected void setClusterEnvironment(boolean enableMutationToken) {
-    Builder envBuilder = ClusterEnvironment.builder();
     if (sslMode.equals("data")) {
-      envBuilder = envBuilder
+      environment = ClusterEnvironment
+          .builder()
           .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
           .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
           .securityConfig(SecurityConfig.enableTls(true)
-              .trustCertificate(Paths.get(certificateFile)));
+              .trustCertificate(Paths.get(certificateFile)))
+          .build();
     } else if (sslMode.equals("capella")) {
-      envBuilder = envBuilder
+      environment = ClusterEnvironment
+          .builder()
           .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
           .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints)
               .enableDnsSrv(true))
           .securityConfig(SecurityConfig.enableTls(true)
-              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE));
+              .trustManagerFactory(InsecureTrustManagerFactory.INSTANCE))
+          .build();
     } else if (sslMode.equals("auth")) {
-      envBuilder = envBuilder
+      environment = ClusterEnvironment
+          .builder()
           .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
           .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
           .securityConfig(SecurityConfig.enableTls(true)
-              .trustStore(keyStore));
+              .trustStore(keyStore))
+          .build();
+      environment.eventBus().subscribe(System.out::println);
     } else {
-      envBuilder = envBuilder
+      environment = ClusterEnvironment
+          .builder()
           .timeoutConfig(TimeoutConfig.kvTimeout(Duration.ofMillis(kvTimeoutMillis)))
-          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints));
+          .ioConfig(IoConfig.enableMutationTokens(enableMutationToken).numKvConnections(kvEndpoints))
+          .build();
     }
-
-    if (this.enableLogging) {
-      metricsManager = new MetricsReportingManager(metrics, metricsStore, enableLogging, emitIntervalSec, logLevel);
-      envBuilder = envBuilder
-          .meter(metricsManager.getMetricsMeter())
-          .loggerConfig(metricsManager.getJDKLoggerConfig())
-          .loggingMeterConfig(metricsManager.getLoggingBuilder());
-
-      System.err.println(metricsManager);
-    }
-    environment = envBuilder.build();
-    // environment.eventBus().subscribe(System.err::println);
   }
 
   private static ReplicateTo parseReplicateTo(final String property) throws DBException {
@@ -968,129 +929,6 @@ public class Couchbase3Client extends DB {
    */
   private static String formatId(final String prefix, final String key) {
     return prefix + KEY_SEPARATOR + key;
-  }
-
-}
-
-class MetricsReportingManager {
-  // Metrics meter (NoopMeter, OpenTelemetryMeter)
-  private Meter metricsMeter;
-  // Metrics Logging (Default LoggingMeter)
-  private long emitIntervalSecs;
-  private boolean enableLogging;
-  private Level logLevel;
-
-  public MetricsReportingManager(String metricsType, String metricsStore, boolean enableLogging, long emitIntervalSecs,
-      String logLevel) {
-    if ("OTel".equalsIgnoreCase(metricsType)) {
-      MetricsStore store;
-      if (metricsStore.equalsIgnoreCase("honeycomb")) {
-        store = new HoneyCombMetricsStore();
-      } else {
-        store = new LocalMetricsStore();
-      }
-      SdkTracerProvider sdkTracerProvider = SdkTracerProvider.builder()
-          .addSpanProcessor(BatchSpanProcessor.builder(store.getSpanExporter()).build())
-          .build();
-
-      SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
-          .registerMetricReader(PeriodicMetricReader.builder(store.getMetricExporter()).build())
-          .build();
-
-      SdkLoggerProvider loggerProvider = SdkLoggerProvider.builder()
-          .addLogRecordProcessor(
-              BatchLogRecordProcessor.builder(store.getLogRecordExporter()).build())
-          .build();
-
-      OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
-          .setTracerProvider(sdkTracerProvider)
-          .setMeterProvider(sdkMeterProvider)
-          .setLoggerProvider(loggerProvider)
-          .buildAndRegisterGlobal();
-      this.metricsMeter = OpenTelemetryMeter.wrap(openTelemetry);
-    } else {
-      this.metricsMeter = NoopMeter.INSTANCE;
-    }
-
-    this.enableLogging = enableLogging;
-    this.emitIntervalSecs = emitIntervalSecs;
-    try {
-      this.logLevel = Level.parse(logLevel.toUpperCase());
-    } catch (Exception e) {
-      this.logLevel = Level.OFF;
-    }
-  }
-
-  public Meter getMetricsMeter() {
-    return this.metricsMeter;
-  }
-
-  public com.couchbase.client.core.env.LoggingMeterConfig.Builder getLoggingBuilder() {
-    return LoggingMeterConfig.enabled(enableLogging).emitInterval(Duration.ofSeconds(emitIntervalSecs));
-  }
-
-  public com.couchbase.client.core.env.LoggerConfig.Builder getJDKLoggerConfig() {
-    return LoggerConfig
-        // .fallbackToConsole(true)
-        // .disableSlf4J(true)
-        .consoleLogLevel(logLevel);
-  }
-
-  @Override
-  public String toString() {
-    return "Logging: { Enabled: " + this.enableLogging + ", Interval: " + this.emitIntervalSecs + ", Level: "
-        + this.logLevel + "}, MetricsMeter: " + this.metricsMeter + "}";
-  }
-}
-
-interface MetricsStore {
-
-  SpanExporter getSpanExporter();
-
-  LoggingMetricExporter getMetricExporter();
-
-  LogRecordExporter getLogRecordExporter();
-
-}
-
-class LocalMetricsStore implements MetricsStore {
-
-  @Override
-  public SpanExporter getSpanExporter() {
-    return OtlpJsonLoggingSpanExporter.create();
-  }
-
-  @Override
-  public LoggingMetricExporter getMetricExporter() {
-    return LoggingMetricExporter.create();
-  }
-
-  @Override
-  public LogRecordExporter getLogRecordExporter() {
-    return SystemOutLogRecordExporter.create();
-  }
-
-}
-
-class HoneyCombMetricsStore implements MetricsStore {
-
-  @Override
-  public SpanExporter getSpanExporter() {
-    return OtlpHttpSpanExporter.builder()
-        .setEndpoint("https://api.honeycomb.io:443")
-        .addHeader("x-honeycomb-team", "PyTYp0grj2wFgCHK1uVegG")
-        .addHeader("x-honeycomb-dataset", "YCSB-Testing")
-        .build();
-  }
-
-  @Override
-  public LoggingMetricExporter getMetricExporter() {
-    return null;
-  }
-
-  @Override
-  public LogRecordExporter getLogRecordExporter() {
-    return null;
   }
 
 }
