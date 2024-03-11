@@ -74,7 +74,7 @@ public class SyncGatewayCollectionWorkload extends CustomCollectionWorkload {
         String dbkey = buildKeyName(keynum);
 
         Status status;
-        int numOfRetries = 100;
+        int numOfRetries = 0;
         do {
             HashMap<String, ByteIterator> values = buildValues(dbkey);
 

@@ -490,7 +490,7 @@ public class SyncGateway3Client extends DB {
         + "?rev=" + docRevision;
     HttpPut httpPutRequest = new HttpPut(fullUrl);
     Status result;
-    int numOfRetries = 100;
+    int numOfRetries = 0;
     do {
       try {
         responseCode = httpExecute(httpPutRequest, requestBody);
