@@ -1897,10 +1897,15 @@ public class SyncGateway3Client extends DB {
         root.set(scope, colls);
       }
     } else {
-      int currCollectionId = (int) (id / usersPerCollection) + 1;
+      String scope = scopes[0];
       ObjectNode colls = factory.objectNode();
-      colls.set("collection-" + currCollectionId, access);
-      root.set(scopes[0], colls); // single named scope for now
+      if (scope.equals("_default")){
+        colls.set("_default", access);
+      }else{
+        int currCollectionId = (int) (id / usersPerCollection) + 1;
+        colls.set("collection-" + currCollectionId, access);
+      }
+      root.set(scope, colls); // single named scope for now
     }
     return root;
   }
