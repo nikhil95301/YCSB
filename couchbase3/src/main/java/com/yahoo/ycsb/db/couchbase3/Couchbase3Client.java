@@ -71,7 +71,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
 /**
  * Full YCSB implementation based on the new Couchbase Java SDK 3.x.
  */
@@ -121,6 +120,10 @@ public class Couchbase3Client extends DB {
   private String certificateFile;
   private String certKeystoreFile;
   private String certKeystorePassword;
+
+  protected String logLevel;
+
+  protected Logger pLogger = LoggerFactory.getLogger(Couchbase3Client.class);
 
   @Override
   public void init() throws DBException {
@@ -175,6 +178,9 @@ public class Couchbase3Client extends DB {
     } else {
       kvPort = Integer.parseInt(props.getProperty("couchbase.kvPort", "11207"));
     }
+
+    logLevel = props.getProperty("couchbase.logging.level", "off");
+
 
     synchronized (INIT_COORDINATOR) {
       if (environment == null) {

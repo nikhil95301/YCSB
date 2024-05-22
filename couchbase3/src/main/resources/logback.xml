@@ -51,7 +51,7 @@ LICENSE file.
     <appender-ref ref="FILE" />
   </logger>
 
-  <logger name="com.yahoo.ycsb.db.couchbase3" level="warn">
+  <logger name="com.yahoo.ycsb.db.couchbase3" level="trace">
     <appender-ref ref="FILE" />
   </logger>
 
