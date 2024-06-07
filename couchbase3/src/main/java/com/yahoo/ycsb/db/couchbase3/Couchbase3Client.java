@@ -82,7 +82,7 @@ public class Couchbase3Client extends DB {
   private static final AtomicInteger OPEN_CLIENTS = new AtomicInteger(0);
   private static final Object INIT_COORDINATOR = new Object();
 
-  private volatile Cluster cluster;
+  private static volatile Cluster cluster;
   private static volatile ReactiveCluster reactiveCluster;
   private static volatile Bucket bucket;
   private static volatile ClusterOptions clusterOptions;
